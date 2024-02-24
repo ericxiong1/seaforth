@@ -60,6 +60,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
+let firstClick = true;
 
 function monitorOn(){
   backgroundSound.play()
@@ -76,6 +77,11 @@ function monitorOn(){
 
 
 function onPointerDown( event ) {
+  if (firstClick){
+    document.querySelector('#tip').style.display = "none"
+    monitorOn()
+    firstClick = false;
+  }
   pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
@@ -353,4 +359,3 @@ function refreshAllText(){
   });
 }
 animate()
-setTimeout(monitorOn,3000)

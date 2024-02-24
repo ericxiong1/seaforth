@@ -12,3 +12,10 @@
 body {
 	overflow: hidden; /* Hide scrollbars */
 }
+#tip{
+	color: white;
+	font-size: 32px;
+	position: absolute;
+	top: 2.5%;
+	left: 2.5%;
+}
