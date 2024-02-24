@@ -5,25 +5,51 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
 import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js';
-import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js';
-import { GlitchPass } from 'three/addons/postprocessing/GlitchPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { HalftonePass } from 'three/addons/postprocessing/HalftonePass.js';
-import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { UnrealBloomPass } from "/node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+
+import { TTFLoader } from 'three/addons/loaders/TTFLoader.js';
+import { Font } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+
 
 const params = {
   threshold: 0,
-  strength: 1,
-  radius: 0.5,
+  strength: 0.4,
+  radius: 0.9,
   exposure: 1
 };
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight,0.1,1000);
+const listener = new THREE.AudioListener();
+camera.add(listener);
+const audioLoader = new THREE.AudioLoader();
+const backgroundSound = new THREE.Audio(listener);
+
+audioLoader.load('./sounds/power-buzz.mp3',function(buffer){
+  backgroundSound.setBuffer(buffer);
+  backgroundSound.setLoop(true);
+  backgroundSound.setVolume(0.05)
+});
+const switchSound = new THREE.Audio(listener);
+audioLoader.load('./sounds/switch.mp3',function(buffer){
+  switchSound.setBuffer(buffer);
+  switchSound.setVolume(0.2)
+});
+
+const keySound = new THREE.Audio(listener);
+audioLoader.load('./sounds/keyboard1.mp3',function(buffer){
+  keySound.setBuffer(buffer);
+  keySound.setVolume(0.2)
+});
+const acceptSound = new THREE.Audio(listener);
+audioLoader.load('./sounds/accept.mp3',function(buffer){
+  acceptSound.setBuffer(buffer);
+  acceptSound.setVolume(0.2)
+});
+
 const renderer = new THREE.WebGLRenderer({
   canvas: document.querySelector('#bg'),
 });
@@ -42,24 +68,27 @@ function onPointerDown( event ) {
 
   raycaster.setFromCamera( pointer, camera );
   const intersects = raycaster.intersectObjects( scene.children);
-
-  if (intersects[0].object.name == "power_on") {
+  if (intersects.length> 0 && intersects[0].object.name == "power_on") {
+    backgroundSound.play()
+    switchSound.play();
     scene.traverse((object) => {
       if (object.name == 'screen') {
-        object.material.color.set(0xE1D9D1);
-        console.log(object.layers)
+        object.material.color.set(0xFFFFFF);
         object.layers.enable(BLOOM_SCENE);
+        object.material.roughness = 0.8;
       }
     });
   }
-  if (intersects[0].object.name == "power_off") {
+  if (intersects.length> 0 && intersects[0].object.name == "power_off") {
+    switchSound.play();
     scene.traverse((object) => {
       if (object.name == 'screen') {
+        backgroundSound.pause()
         object.material.color.r = 0.06193931773304939
         object.material.color.g = 0.07818111777305603
         object.material.color.b = 0.0741833969950676
-        console.log(object.layers)
         object.layers.disable(BLOOM_SCENE);
+        object.material.roughness = 0.12823103368282318;
       }
     });
   }
@@ -71,6 +100,12 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 camera.position.setZ(6);
 camera.position.setY(5);
 camera.position.setX(2);
+
+let text = ">Welcome to my website! :-)\n>Type help to see available commands.\n>Hold left click to rotate, and right\n>click to pan."
+let terminal = ">"
+let firstLetter = true
+let font = null
+let experienceActive = false;
 
 const renderScene = new RenderPass( scene, camera );
 
@@ -100,7 +135,7 @@ mixPass.needsSwap = true;
 const outputPass = new OutputPass();
 
 const effect2 = new ShaderPass( RGBShiftShader );
-effect2.uniforms[ 'amount' ].value = 0.0015;
+effect2.uniforms[ 'amount' ].value = 0.0009;
 
 
 const finalComposer = new EffectComposer( renderer );
@@ -129,11 +164,11 @@ function restoreMaterial(obj){
   }
 }
 
-const pointLight = new THREE.PointLight(0xffffff,2);
+const pointLight = new THREE.PointLight(0xffffff,3);
 pointLight.position.set(1, 3, 3);
 
-// const ambientLight = new THREE.AmbientLight(0xffffff);
-scene.add(pointLight);
+const ambientLight = new THREE.AmbientLight(0xffffff,0.05);
+scene.add(pointLight,ambientLight);
 
 // const gridHelper = new THREE.GridHelper(100,100);
 // scene.add(gridHelper);
@@ -144,9 +179,27 @@ loader.load("/fixed1.glb", function (gltf){
 });
 
 
+const fontLoader = new TTFLoader();
+let textMesh1,textMesh2;
+let material = new THREE.MeshStandardMaterial( { color: 0x000000} );
+let group = new THREE.Group();
+group.position.x = -0.25;
+group.position.y = 2.75;
+group.position.z = 0.81;
+scene.add( group );
+
+fontLoader.load( 'ttf/VT323-Regular.ttf', function ( json ) {
+
+  font = new Font( json );
+  createText();
+
+} );
+
 const controls = new OrbitControls(camera, renderer.domElement);
 
 window.addEventListener( 'pointerdown', onPointerDown );
+window.addEventListener( 'keypress', onDocumentKeyPress );
+window.addEventListener( 'keydown', onDocumentKeyDown );
 
 function animate(){
   controls.update()
@@ -158,4 +211,126 @@ function animate(){
   requestAnimationFrame(animate);
 }
 
+function createText(){
+  let textGeo1 = new TextGeometry(text,{
+    font: font,
+    size: 0.075,
+    height: 0.01,
+    curveSegments: 4,
+    bevelEnabled: false
+  })
+
+  let textGeo2 = new TextGeometry(terminal,{
+    font: font,
+    size: 0.075,
+    height: 0.01,
+    curveSegments: 4,
+    bevelEnabled: false
+  })
+
+  textMesh1 = new THREE.Mesh( textGeo1, material );
+  group.add( textMesh1 );
+
+  textMesh2 = new THREE.Mesh( textGeo2, material );
+  textMesh2.position.y = textMesh1.position.y - 1.1
+  group.add( textMesh2 );
+}
+function onDocumentKeyDown( event ) {
+  keySound.stop()
+  keySound.play()
+
+  if ( firstLetter ) {
+
+    firstLetter = false;
+    terminal = '>';
+
+  }
+
+  const keyCode = event.keyCode;
+
+  // backspace
+
+  if ( keyCode === 8 && !(terminal.length == 1)) {
+
+    event.preventDefault();
+    terminal = terminal.substring( 0, terminal.length - 1 );
+    refreshInputText()
+
+    return false;
+    
+
+  }
+
+  if(keyCode == 13){
+    
+    event.preventDefault();
+    let command = terminal.substring(1);
+    if (!(command == "")){
+      acceptSound.stop()
+      acceptSound.play()
+    }
+
+    if (command == "help"){
+      text = ">Available commands:\n>about - learn more about me!\n>experience - see my experience!\n>projects - see stuff i've built!\n>website - learn how i made this!\n>contact - contact me!\n>off - bottom right switches.."
+    }
+    else if (command == "about"){
+      text = ">I'm Eric, a 4th year software\n>engineer studying at the University\n>of Alberta. I love making software\n>that meets right in the middle of\n>creativity and practicality - things\n>that look good and are soundly built.\n\n>When I'm not at the computer, I'm\n>probably with my cat :p"
+    }
+    else if (command == "experience"){
+      text = ">Bio-Conversion Databank Foundation\n>Jan 2023 - Oct 2023\n>I worked as a full-stack engineer \n>using Vue 2 and AWS Cloud. While I\n>was there, I developed a CRUD bio-\n>informatic metabolite map with D3.js,\n>GraphQL, and DynamoDB as an aide\n>for biology research. I also was\n>involved with the pipeline automation\n>of new maps using Boto3/Python.\n>Type 'n' to go to the next page!"
+      experienceActive = true
+      console.log(experienceActive)
+    }
+    else if (command == "n" && experienceActive){
+      text = ">AlbertaSat\n>Jan 2022 - Jan 2023\n"
+    }
+    else{
+      text = ">Don't know that command :(\n>about - learn more about me!\n>website - learn how i made this!"
+    }
+    terminal = ">"
+    refreshAllText()
+  }
+
+}
+
+function onDocumentKeyPress(e){
+  const keyCode = e.which;
+  
+  if(keyCode === 8){
+    e.preventDefault();
+  }else{
+    const ch = String.fromCharCode(keyCode);
+    terminal += ch
+    refreshInputText()
+  }
+}
+
+function refreshInputText(){
+  textMesh2.geometry.dispose();
+  textMesh2.geometry = new TextGeometry(terminal, {
+    font: font,
+    size: 0.075,
+    height: 0.01,
+    curveSegments: 4,
+    bevelEnabled: false
+  });
+}
+function refreshAllText(){
+  textMesh1.geometry.dispose();
+  textMesh1.geometry = new TextGeometry(text, {
+    font: font,
+    size: 0.075,
+    height: 0.01,
+    curveSegments: 4,
+    bevelEnabled: false
+  });
+  textMesh2.geometry.dispose();
+  textMesh2.geometry = new TextGeometry(terminal, {
+    font: font,
+    size: 0.075,
+    height: 0.01,
+    curveSegments: 4,
+    bevelEnabled: false
+  });
+}
 animate()
