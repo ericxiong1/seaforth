@@ -61,6 +61,19 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
+function monitorOn(){
+  backgroundSound.play()
+  switchSound.play();
+  scene.traverse((object) => {
+    if (object.name == 'screen') {
+      group.visible = true;
+      object.material.color.set(0xFFFFFF);
+      object.layers.enable(BLOOM_SCENE);
+      object.material.roughness = 0.8;
+    }
+  });
+}
+
 
 function onPointerDown( event ) {
   pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -73,6 +86,7 @@ function onPointerDown( event ) {
     switchSound.play();
     scene.traverse((object) => {
       if (object.name == 'screen') {
+        group.visible = true;
         object.material.color.set(0xFFFFFF);
         object.layers.enable(BLOOM_SCENE);
         object.material.roughness = 0.8;
@@ -83,6 +97,7 @@ function onPointerDown( event ) {
     switchSound.play();
     scene.traverse((object) => {
       if (object.name == 'screen') {
+        group.visible = false;
         backgroundSound.pause()
         object.material.color.r = 0.06193931773304939
         object.material.color.g = 0.07818111777305603
@@ -179,6 +194,7 @@ loader.load("/fixed1.glb", function (gltf){
 });
 
 
+
 const fontLoader = new TTFLoader();
 let textMesh1,textMesh2;
 let material = new THREE.MeshStandardMaterial( { color: 0x000000} );
@@ -187,6 +203,7 @@ group.position.x = -0.25;
 group.position.y = 2.75;
 group.position.z = 0.81;
 scene.add( group );
+group.visible = false;
 
 fontLoader.load( 'ttf/VT323-Regular.ttf', function ( json ) {
 
@@ -196,6 +213,8 @@ fontLoader.load( 'ttf/VT323-Regular.ttf', function ( json ) {
 } );
 
 const controls = new OrbitControls(camera, renderer.domElement);
+
+
 
 window.addEventListener( 'pointerdown', onPointerDown );
 window.addEventListener( 'keypress', onDocumentKeyPress );
@@ -334,3 +353,4 @@ function refreshAllText(){
   });
 }
 animate()
+setTimeout(monitorOn,3000)
