@@ -61,6 +61,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 let firstClick = true;
+let loading = true;
 
 function monitorOn(){
   backgroundSound.play()
@@ -77,6 +78,9 @@ function monitorOn(){
 
 
 function onPointerDown( event ) {
+  if (loading){
+    return
+  }
   if (firstClick){
     document.querySelector('#tip').style.display = "none"
     monitorOn()
@@ -118,15 +122,17 @@ function onPointerDown( event ) {
 
 // Set the renderer size to the new width and height
 renderer.setSize(window.innerWidth, window.innerHeight);
-camera.position.setZ(6);
-camera.position.setY(5);
-camera.position.setX(2);
+camera.position.setZ(3.5);
+camera.position.setY(3.5);
+camera.position.setX(1);
 
 let text = ">Welcome to my website! :-)\n>Type help to see available commands.\n>Hold left click to rotate, and right\n>click to pan."
 let terminal = ">"
 let firstLetter = true
 let font = null
 let experienceActive = false;
+let projectNum = 0
+let codeNum = -1
 
 const renderScene = new RenderPass( scene, camera );
 
@@ -225,6 +231,7 @@ const controls = new OrbitControls(camera, renderer.domElement);
 window.addEventListener( 'pointerdown', onPointerDown );
 window.addEventListener( 'keypress', onDocumentKeyPress );
 window.addEventListener( 'keydown', onDocumentKeyDown );
+window.addEventListener( 'resize', onWindowResize );
 
 function animate(){
   controls.update()
@@ -296,21 +303,64 @@ function onDocumentKeyDown( event ) {
     }
 
     if (command == "help"){
-      text = ">Available commands:\n>about - learn more about me!\n>experience - see my experience!\n>projects - see stuff i've built!\n>website - learn how i made this!\n>contact - contact me!\n>off - bottom right switches.."
+      text = ">Available commands:\n>about - learn more about me!\n>experience - see my experience!\n>projects - see stuff i've built!\n>website - learn how i made this!\n>contact - contact me!\n>Try the switches on the bottom right!\n>Hold left click to rotate, and right\n>click to pan. Scroll wheel to zoom."
+      projectNum = 0
+      codeNum = -1
     }
     else if (command == "about"){
       text = ">I'm Eric, a 4th year software\n>engineer studying at the University\n>of Alberta. I love making software\n>that meets right in the middle of\n>creativity and practicality - things\n>that look good and are soundly built.\n\n>When I'm not at the computer, I'm\n>probably with my cat :p"
+      projectNum = 0
+      codeNum = -1
     }
     else if (command == "experience"){
       text = ">Bio-Conversion Databank Foundation\n>Jan 2023 - Oct 2023\n>I worked as a full-stack engineer \n>using Vue 2 and AWS Cloud. While I\n>was there, I developed a CRUD bio-\n>informatic metabolite map with D3.js,\n>GraphQL, and DynamoDB as an aide\n>for biology research. I also was\n>involved with the pipeline automation\n>of new maps using Boto3/Python.\n>Type 'n' to go to the next page!"
       experienceActive = true
-      console.log(experienceActive)
+      projectNum = 0
+      codeNum = -1
     }
     else if (command == "n" && experienceActive){
-      text = ">AlbertaSat\n>Jan 2022 - Jan 2023\n"
+      text = ">AlbertaSat\n>Jan 2022 - Jan 2023\n>I worked as a volunteer for the\n>development and testing of a \n>Raspberry Pi 4 attached with an x-ray\n>spectrometer to be placed on a weather\n>balloon. I used Python, Pandas, and\n>Matplotlib for testing as well as\n>data processing. I wrote test cases\n>for the launch using the unittest\n>framework for unit testing!"
+      experienceActive = false;
+    }
+    else if (command == "projects"){
+      text = ">Packedify Spotify Playlist Manager\n>An SPA project using React.js and\n>Express.js that allows the user to\n>grab their top 50 songs and artists\n>from the last 1-6 months using the\n>Spotify Web API. It implements the\n>OAuth 2.0 authentication flow,\n>allowing the user to login securely\n>and fetch their data.\n>Type 'n' to go to the next page!\n>Type 'code' to see the code!"
+      projectNum = 1
+      codeNum = 0
+    }
+    else if (command == "n" && projectNum == 1){
+      text = ">BCI Chromium Extension\n>A JavaScript based Chromium extension\n>that uses the Web Bluetooth API to\n>gather EEG data from a Muse S user.\n>It manipulates the browser screen\n>brightness based on the user's\n>wakefulness and light level for\n>comfort on the eyes.\n>Type 'n' to go to the next page!\n>Type 'code' to see the code!"
+      projectNum++
+      codeNum = 1
+    }
+    else if (command == "n" && projectNum == 2){
+      text = ">Pythons on A Plane\n>An endless runner game reminiscent\n>of games like Jetpack Joyride. Uses\n>pygame for the game design and\n>Firebase for a backend leaderboard!\n>Dodge menacing obstacles and collect\n>coins to soar through the skies with\n>finesse.\n>Type 'code' to see the code!"
+      codeNum = 2
+      projectNum = 0
+    }
+    else if (command == "code" && codeNum == 0){
+      window.open("https://github.com/ericxiong1/packedify-public", '_blank').focus();
+      codeNum = -1
+    }
+    else if (command == "code" && codeNum == 1){
+      window.open("https://github.com/ericxiong1/bci-chromium-extension", '_blank').focus();
+      codeNum = -1
+    }
+    else if (command == "code" && codeNum == 2){
+      window.open("https://github.com/ericxiong1/pythons-on-a-plane", '_blank').focus();
+      codeNum = -1
+    }
+    else if(command == "website"){
+      text = ">This website was built from scratch\n>using free Blender models, free\n>royalty sounds, and vanilla JS using\n>the amazing library three.js! This\n>was my first project in 3D WebGL\n>programming. All post-processing\n>effects, bloom, events, lighting,\n>and audio cues were all learned from\n>the wonderful examples three.js has\n>provided in their documentation."
+      projectNum = 0
+      codeNum = -1
+    }
+    else if(command == "contact"){
+      text = ">I'm looking for work for my 4-8\n>month co-op term starting May 2024!\n>If you're interested in adding me to\n>your team, please reach out via my\n>email at exiong@ualberta.ca! I'd love\n>to hear from you!"
     }
     else{
-      text = ">Don't know that command :(\n>about - learn more about me!\n>website - learn how i made this!"
+      text = ">Don't know that command :(\n>about - learn more about me!\n>experience - see my experience!\n>projects - see stuff i've built!\n>website - learn how i made this!\n>contact - contact me!\n>Try the switches on the bottom right!\n>Hold left click to rotate, and right\n>click to pan. Scroll wheel to zoom."
+      projectNum = 0
+      codeNum = -1
     }
     terminal = ">"
     refreshAllText()
@@ -325,7 +375,9 @@ function onDocumentKeyPress(e){
     e.preventDefault();
   }else{
     const ch = String.fromCharCode(keyCode);
-    terminal += ch
+    if (terminal.length<35){
+      terminal += ch
+    }
     refreshInputText()
   }
 }
@@ -358,4 +410,17 @@ function refreshAllText(){
     bevelEnabled: false
   });
 }
+
+function onWindowResize() {
+
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize( window.innerWidth, window.innerHeight );
+
+}
+setTimeout(() => {
+  document.querySelector('#screen').style.display = "none"
+  loading = false
+}, 1500);
 animate()
