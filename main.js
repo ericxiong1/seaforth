@@ -13,11 +13,6 @@ import { TTFLoader } from 'three/addons/loaders/TTFLoader.js';
 import { Font } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
-import "./assets/sounds/power-buzz.mp3"
-import './assets/sounds/switch.mp3'
-import './assets/sounds/keyboard1.mp3'
-import './assets/sounds/accept.mp3'
-import './assets/ttf/VT323-Regular.ttf'
 
 const params = {
   threshold: 0,
@@ -33,24 +28,24 @@ camera.add(listener);
 const audioLoader = new THREE.AudioLoader();
 const backgroundSound = new THREE.Audio(listener);
 
-audioLoader.load('./assets/sounds/power-buzz.mp3',function(buffer){
+audioLoader.load('power-buzz.mp3',function(buffer){
   backgroundSound.setBuffer(buffer);
   backgroundSound.setLoop(true);
   backgroundSound.setVolume(0.05)
 });
 const switchSound = new THREE.Audio(listener);
-audioLoader.load('./assets/sounds/switch.mp3',function(buffer){
+audioLoader.load('switch.mp3',function(buffer){
   switchSound.setBuffer(buffer);
   switchSound.setVolume(0.2)
 });
 
 const keySound = new THREE.Audio(listener);
-audioLoader.load('./assets/sounds/keyboard1.mp3',function(buffer){
+audioLoader.load('keyboard1.mp3',function(buffer){
   keySound.setBuffer(buffer);
   keySound.setVolume(0.2)
 });
 const acceptSound = new THREE.Audio(listener);
-audioLoader.load('./assets/sounds/accept.mp3',function(buffer){
+audioLoader.load('accept.mp3',function(buffer){
   acceptSound.setBuffer(buffer);
   acceptSound.setVolume(0.2)
 });
@@ -200,7 +195,7 @@ scene.add(pointLight,ambientLight);
 // scene.add(gridHelper);
 
 const loader = new GLTFLoader();
-loader.load("fixed1.glb", function (gltf){
+loader.load("https://rawcdn.githack.com/ericxiong1/seaforth/422e4ae4745db215074230301ecb914f7f7da931/public/fixed1.glb", function (gltf){
   scene.add(gltf.scene);
 });
 
@@ -216,7 +211,7 @@ group.position.z = 0.81;
 scene.add( group );
 group.visible = false;
 
-fontLoader.load( './assets/ttf/VT323-Regular.ttf', function ( json ) {
+fontLoader.load( 'VT323-Regular.ttf', function ( json ) {
 
   font = new Font( json );
   createText();
